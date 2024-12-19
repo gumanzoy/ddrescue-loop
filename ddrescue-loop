@@ -21,53 +21,109 @@
 # * To Public License, Version 2, as published by Sam Hocevar. See
 # * http://www.wtfpl.net/ for more details. */
 
-VERSION=0.2.1
+VERSION=0.2.3
 
-showhelp () {
+showhelp_en () {
+echo "ddrescue-loop v""$VERSION"" restarts ddrescue in case of failure"
+echo "Please note the order of arguments"
+echo "Keys must be passed in the same order as they are written"
+echo "Mixing not supported. Space between key and value is required"
+echo ""
+echo "# ----- SATA ----- SATA ----- SATA ----- SATA ----- SATA -----"
+echo "# Stop/start drive at SATA port:"
+echo "-ata <n> -stop""		""stop drive at SATA port <n>"
+echo "-ata <n> -scan""		""scan SATA port <n>"
+echo ""
+echo "# Launch recovery from SATA drive:"
+echo "ddrescue-loop -ata <n> [-loop <n>] [-pwc] [-wait <n>] [-act <n>] outfile mapfile [ddrescue options]"
+echo ""
+echo "# Specify the SATA port number to which the source drive is connected:"
+echo "-ata <n>""		""SATA port number <n> dight (look at dmesg output)"
+/bin/echo -n "			""#: "; ls /sys/class/ata_port
+echo ""
+echo "# Stop/restart function for SATA drive in case of failure:"
+echo "-loop <n>""		""<n> limit number of attempts"
+echo ""
+echo "# Timeout for drive get ready after stop/restart:"
+echo "-wait <n>""		""Time in seconds <n> [10]"
+echo ""
+echo "# Change ATA command timeout:"
+echo "-act <n>""		""Time in seconds <n> [30]"
+echo ""
+echo "# ------ USB ------ USB ------ USB ------ USB ------ USB -----"
+echo "# Power off/power on USB device <ID>, by <hub/rle> method:"
+echo "-usb <ID> -pwc hub""	""Use uhubctl --search <ID>"
+echo "-usb <ID> -pwc rle""	""Use USB Relay LCUS-1 CH340 RLETTY=""$RLETTY"
+echo ""
+echo "# Launch recovery from USB drive:"
+echo "ddrescue-loop -usb <ID> [-loop <n>] [-pwc <hub/rle>] [-wait <n>] outfile mapfile [ddrescue options]"
+echo ""
+echo "# Specify the VID:PID ID of the source USB drive in Hex form:"
+echo "-usb <ID>""		""<VID:PID> separated by colon (look at lsusb output)"
+echo ""
+echo "# Restart ddrescue process [power off/on device] in case of failure:"
+echo "-loop <n>""		""<n> limit number of attempts"
+echo ""
+echo "# Main options:"
+echo "outfile""			""output device / outfile"
+echo "mapfile""			""ddrescue map/log file (required)"
+echo ""
+echo "# After mapfile may specify ddrescue options"
+echo "# Use man ddrescue to read full list of options. Some important options:"
+echo "-P [<n>]""		""show some lines of the latest data read [3]"
+echo "-b 4096""			""<bytes> sector size of input device [default 512]"
+echo "-c <n>""			""<n> sectors to copy at a time [default 128]"
+echo "-O"" #Important!		""reopen input device file after every read error"
+echo "-J"" #Optional		""reread latest good sector after every error"
+echo "-r <n> #OR -r -1""	""<n> retry passes before trim (-1=infinity) [0]"
+echo "-m <domain.mapfile>""	""restrict domain to finished blocks in <file> ddru_ntfsbitmap"
+}
+
+showhelp_ru () {
 echo "ddrescue-loop v""$VERSION"" перезапускает процесс ddrescue в случае его завершения"
 echo "Внимание следует соблюдать очередность аргументов"
 echo "Указывать ключи в произвольном порядке нельзя!"
 echo "Числовые значения аргументов обязательно через пробел"
-echo -n "\n"
+echo ""
 echo "# ----- SATA ----- SATA ----- SATA ----- SATA ----- SATA -----"
 echo "# Остановить/запустить диск на SATA порту:"
 echo "-ata <n> -stop""		""остановить диск на SATA порту <n>"
 echo "-ata <n> -scan""		""сканировать SATA порт <n>"
-echo -n "\n"
+echo ""
 echo "# Запустить восстановление c SATA:"
 echo "ddrescue-loop -ata <n> [-loop <n>] [-pwc] [-wait <n>] [-act <n>] outfile mapfile [ddrescue options]"
-echo -n "\n"
+echo ""
 echo "# Укажите номер SATA порта к которому подключен диск источник:"
-echo -n "-ata <n>""		""Номер SATA порта <n> цифра (смотрите вывод dmesg)"
-echo -n "\n""			""#: "; ls /sys/class/ata_port
-echo -n "\n"
+echo "-ata <n>""		""Номер SATA порта <n> цифра (смотрите вывод dmesg)"
+/bin/echo -n "			""#: "; ls /sys/class/ata_port
+echo ""
 echo "# Функция циклической остановки/перезапуска диска на SATA порту:"
 echo "-loop <n>""		""<n> предельное число попыток"
-echo -n "\n"
+echo ""
 echo "# Таймер ожидания остановки/перезапуска диска:"
 echo "-wait <n>""		""Время в секундах <n> [10]"
-echo -n "\n"
+echo ""
 echo "# Переопределить таймаут ожидания исполнения ATA команд:"
 echo "-act <n>""		""Время в секундах <n> [30]"
-echo -n "\n"
+echo ""
 echo "# ------ USB ------ USB ------ USB ------ USB ------ USB -----"
 echo "# Отключить/включить питание USB устройства <ID>, методом <hub/rle>:"
 echo "-usb <ID> -pwc hub""	""Использовать uhubctl --search <ID>"
 echo "-usb <ID> -pwc rle""	""Использовать USB реле LCUS-1 CH340 RLETTY=""$RLETTY"
-echo -n "\n"
+echo ""
 echo "# Запустить восстановление c USB:"
 echo "ddrescue-loop -usb <ID> [-loop <n>] [-pwc <hub/rle>] [-wait <n>] outfile mapfile [ddrescue options]"
-echo -n "\n"
+echo ""
 echo "# Укажите Hex идентификаторы VID:PID USB устройства источника:"
 echo "-usb <ID>""		""<VID:PID> через двоеточие (смотрите вывод lsusb)"
-echo -n "\n"
+echo ""
 echo "# Функция циклического перезапуска ddrescue:"
 echo "-loop <n>""		""<n> предельное число попыток"
-echo -n "\n"
+echo ""
 echo "# Основные:"
 echo "outfile""			""Устройство приемник данных / файл образа"
 echo "mapfile""			""ddrescue map/log файл (обязательно)"
-echo -n "\n"
+echo ""
 echo "# В конце после mapfile можно указать опции запуска ddrescue через пробел"
 echo "# Поддержка зависит от версии. Полный список опций в мануале. Важные:"
 echo "-P [<n>]""		""Предпросмотр данных [число строк] по умолчанию 3"
@@ -77,6 +133,11 @@ echo "-O"" #Рекомендую!		""После каждой ошибки зан
 echo "-J"" #Опционален		""При ошибке перечитать последний не сбойный сектор"
 echo "-r <n> #ИЛИ -r -1""	""<n> число повторных проходов до перехода к trim"
 echo "-m <domain.mapfile>""	""Ограничить область чтения доменом <file> ddru_ntfsbitmap"
+}
+
+showhelp () {
+if [ -n "$LANG" ] && [ "$LANG" = "ru_RU.UTF-8" ]; then showhelp_ru
+else showhelp_en; fi
 }
 
 get_ata_host () {
@@ -90,9 +151,15 @@ until SYSFSTGT=`readlink -f /sys/class/ata_port/ata"$1"/device/host?/target?:?:?
 }
 
 get_ata_dev () {
-until INDEV=`readlink -f /dev/disk/by-path/pci-*-ata-"$1"` \
+get_ata_target "$1"
+until INDEV=/dev/`basename "$SYSFSTGT"/block/sd?` \
 && test -b "$INDEV"; do sleep 1; done
 }
+
+#get_ata_dev () {
+#until INDEV=`readlink -f /dev/disk/by-path/pci-*-ata-"$1"` \
+#&& test -b "$INDEV"; do sleep 1; done
+#}
 
 device_delete () {
 while test -f "$SYSFSTGT"/delete; do echo 1 > "$SYSFSTGT"/delete; sleep 1; done
@@ -104,8 +171,8 @@ SYSFSTGT="$1""/device/"
 }
 
 get_usb_dev_by_id () {
-IDVID=`echo -n "$1" | cut -d ":" -f1`
-IDPID=`echo -n "$1" | cut -d ":" -f2`
+IDVID=`/bin/echo -n "$1" | cut -d ":" -f1`
+IDPID=`/bin/echo -n "$1" | cut -d ":" -f2`
 
 until get_usb_dev_by_path `udevadm trigger -v -n -s block \
 -p ID_VENDOR_ID="$IDVID" -p ID_MODEL_ID="$IDPID"` \
@@ -114,7 +181,7 @@ until get_usb_dev_by_path `udevadm trigger -v -n -s block \
 
 power_cycle () {
 if [ -n "$USBID" ] && [ "$PWRCTL" = hub ]; then
-uhubctl --search "$USBID" --action cycle --delay "$LOOPWAIT"
+uhubctl --search "$USBID" --action cycle --delay "$LOOPWAIT --nodesc --force"
 elif [ "$PWRCTL" = rle ]; then /bin/echo -en "\xA0\x01\x01\xA2" > "$RLETTY" && \
 sleep "$LOOPWAIT" && /bin/echo -en "\xA0\x01\x00\xA1" > "$RLETTY"
 fi
@@ -134,7 +201,7 @@ echo "RLETTY=""$RLETTY"" control device not found"; exit 1; fi
 if [ -n "$1" ] && [ "$1" = "-ata" ]; then
 if [ -n "$2" ] && test -d /sys/class/ata_port/ata"$2"; then
 SATAP="$2"; get_ata_host "$SATAP"; shift; shift
-else echo -n "Please enter correct port number: "; ls /sys/class/ata_port; exit 1; fi
+else /bin/echo -n "Please enter correct port number: "; ls /sys/class/ata_port; exit 1; fi
 fi
 
 if [ -n "$1" ] && [ "$1" = "-stop" ] && [ -n "$SATAP" ]; then
@@ -221,8 +288,8 @@ if [ "$DONE" != 0 ] && [ "$DDLOOP" -gt 0 ]; then
   DDLOOP=$(($DDLOOP-1))
   LOOPCOUNT=$(($LOOPCOUNT+1))
 
-  echo "\n\033[1mDDLOOP #""$LOOPCOUNT"; tput sgr0
-  date; echo -n "\n"
+  /bin/echo -e "\n\033[1mDDLOOP #""$LOOPCOUNT"; tput sgr0
+  date; echo ""
 
   sleep "$LOOPWAIT"
 
