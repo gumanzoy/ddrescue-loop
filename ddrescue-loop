@@ -3,9 +3,14 @@
 
 # Compatible only with Linux, not with other *nix!
 # Depends on udev /dev and sysfs /sys kernel interfaces
-# Requires SATA AHCI compatible motherboard
+
+# For SATA requires AHCI compatible motherboard
 # For all Intel and modern AMD platforms (AM4 and newer), check the UEFI Setup
 # SATA settings to ensure Port Hot Plug is enabled
+
+# For USB requires lsusb from usbutils package
+# And optional uhubctl for power off/on cycle
+# Or hardware USB Relay Module LCUS-1 CH340
 
 # [RU] forum thread. Обсуждение
 # https://forum.ixbt.com/topic.cgi?id=11:47589-31
@@ -16,7 +21,7 @@
 # * To Public License, Version 2, as published by Sam Hocevar. See
 # * http://www.wtfpl.net/ for more details. */
 
-VERSION=0.1.1
+VERSION=0.2.1
 
 showhelp () {
 echo "ddrescue-loop v""$VERSION"" перезапускает процесс ddrescue в случае его завершения"
@@ -24,12 +29,13 @@ echo "Внимание следует соблюдать очередность 
 echo "Указывать ключи в произвольном порядке нельзя!"
 echo "Числовые значения аргументов обязательно через пробел"
 echo -n "\n"
+echo "# ----- SATA ----- SATA ----- SATA ----- SATA ----- SATA -----"
 echo "# Остановить/запустить диск на SATA порту:"
 echo "-ata <n> -stop""		""остановить диск на SATA порту <n>"
 echo "-ata <n> -scan""		""сканировать SATA порт <n>"
 echo -n "\n"
-echo "# Запустить восстановление:"
-echo "ddrescue-loop -ata <n> [-loop <n>] [-wait <n>] [-act <n>] outfile mapfile [ddrescue options]"
+echo "# Запустить восстановление c SATA:"
+echo "ddrescue-loop -ata <n> [-loop <n>] [-pwc] [-wait <n>] [-act <n>] outfile mapfile [ddrescue options]"
 echo -n "\n"
 echo "# Укажите номер SATA порта к которому подключен диск источник:"
 echo -n "-ata <n>""		""Номер SATA порта <n> цифра (смотрите вывод dmesg)"
@@ -44,14 +50,29 @@ echo -n "\n"
 echo "# Переопределить таймаут ожидания исполнения ATA команд:"
 echo "-act <n>""		""Время в секундах <n> [30]"
 echo -n "\n"
+echo "# ------ USB ------ USB ------ USB ------ USB ------ USB -----"
+echo "# Отключить/включить питание USB устройства <ID>, методом <hub/rle>:"
+echo "-usb <ID> -pwc hub""	""Использовать uhubctl --search <ID>"
+echo "-usb <ID> -pwc rle""	""Использовать USB реле LCUS-1 CH340 RLETTY=""$RLETTY"
+echo -n "\n"
+echo "# Запустить восстановление c USB:"
+echo "ddrescue-loop -usb <ID> [-loop <n>] [-pwc <hub/rle>] [-wait <n>] outfile mapfile [ddrescue options]"
+echo -n "\n"
+echo "# Укажите Hex идентификаторы VID:PID USB устройства источника:"
+echo "-usb <ID>""		""<VID:PID> через двоеточие (смотрите вывод lsusb)"
+echo -n "\n"
+echo "# Функция циклического перезапуска ddrescue:"
+echo "-loop <n>""		""<n> предельное число попыток"
+echo -n "\n"
 echo "# Основные:"
 echo "outfile""			""Устройство приемник данных / файл образа"
 echo "mapfile""			""ddrescue map/log файл (обязательно)"
 echo -n "\n"
 echo "# В конце после mapfile можно указать опции запуска ddrescue через пробел"
 echo "# Поддержка зависит от версии. Полный список опций в мануале. Важные:"
-echo "-P [<lines>]""		""Предпросмотр данных [число строк] по умолчанию 3"
-echo "-b 4096""			""Размер сектора (физического блока) [default 512]"
+echo "-P [<n>]""		""Предпросмотр данных [число строк] по умолчанию 3"
+echo "-b 4096""			""<bytes> размер сектора (физического блока) [default 512]"
+echo "-c <n>""			""Размер кластера <n> секторов за раз [default 128]"
 echo "-O"" #Рекомендую!		""После каждой ошибки заново открывать файл устройства"
 echo "-J"" #Опционален		""При ошибке перечитать последний не сбойный сектор"
 echo "-r <n> #ИЛИ -r -1""	""<n> число повторных проходов до перехода к trim"
@@ -73,6 +94,32 @@ until INDEV=`readlink -f /dev/disk/by-path/pci-*-ata-"$1"` \
 && test -b "$INDEV"; do sleep 1; done
 }
 
+device_delete () {
+while test -f "$SYSFSTGT"/delete; do echo 1 > "$SYSFSTGT"/delete; sleep 1; done
+}
+
+get_usb_dev_by_path () {
+INDEV="/dev/"`basename "$1"`
+SYSFSTGT="$1""/device/"
+}
+
+get_usb_dev_by_id () {
+IDVID=`echo -n "$1" | cut -d ":" -f1`
+IDPID=`echo -n "$1" | cut -d ":" -f2`
+
+until get_usb_dev_by_path `udevadm trigger -v -n -s block \
+-p ID_VENDOR_ID="$IDVID" -p ID_MODEL_ID="$IDPID"` \
+&& test -b "$INDEV"; do sleep 1; done
+}
+
+power_cycle () {
+if [ -n "$USBID" ] && [ "$PWRCTL" = hub ]; then
+uhubctl --search "$USBID" --action cycle --delay "$LOOPWAIT"
+elif [ "$PWRCTL" = rle ]; then /bin/echo -en "\xA0\x01\x01\xA2" > "$RLETTY" && \
+sleep "$LOOPWAIT" && /bin/echo -en "\xA0\x01\x00\xA1" > "$RLETTY"
+fi
+}
+
 if [ "$1" = "-h" -o "$1" = "--help" ]; then showhelp
 exit; fi
 
@@ -80,16 +127,41 @@ if [ "`whoami`" != "root" ]; then
 echo Exit. This script should be run as root !
 exit 1; fi
 
+if [ -z "$RLETTY" ] && test -c /dev/ttyUSB0; then RLETTY="/dev/ttyUSB0"
+elif [ -n "$RLETTY" ] && ! test -c "$RLETTY"; then
+echo "RLETTY=""$RLETTY"" control device not found"; exit 1; fi
+
 if [ -n "$1" ] && [ "$1" = "-ata" ]; then
 if [ -n "$2" ] && test -d /sys/class/ata_port/ata"$2"; then
 SATAP="$2"; get_ata_host "$SATAP"; shift; shift
 else echo -n "Please enter correct port number: "; ls /sys/class/ata_port; exit 1; fi
 fi
 
+if [ -n "$1" ] && [ "$1" = "-stop" ] && [ -n "$SATAP" ]; then
+get_ata_target "$SATAP"; device_delete; exit; fi
+
+if [ -n "$1" ] && [ "$1" = "-scan" ] && [ -n "$SATAP" ]; then
+echo '0 0 0' > "$SCSIHOST"/scan; exit; fi
+
+if [ -n "$1" ] && [ "$1" = "-usb" ] && [ -z "$SATAP" ]; then
+if [ -n "$2" ] && lsusb -d "$2"; then
+USBID="$2"; get_usb_dev_by_id "$USBID"; shift; shift
+else echo "Please enter correct USB Device ID:"
+lsusb | cut -d ":" -f2,3 | grep -vi hub
+exit 1; fi
+fi
+
 if [ -n "$1" ] && [ "$1" = "-loop" ]; then
 if [ -n "$2" ] && [ "$2" -gt 0 ]; then
 DDLOOP="$2"; shift; shift; fi
 else DDLOOP=0
+fi
+
+if [ -n "$1" ] && [ "$1" = "-pwc" ]; then
+if [ -n "$USBID" ] && [ -n "$2" ] && [ "$2" = "hub" -o "$2" = "rle" ]; then
+PWRCTL="$2"; echo "PWRCTL=""$2"; shift; shift
+elif [ -n "$RLETTY" ]; then
+PWRCTL="rle"; echo "PWRCTL=rle"; shift; fi
 fi
 
 if [ -n "$1" ] && [ "$1" = "-wait" ]; then
@@ -103,15 +175,15 @@ if [ -n "$2" ] && [ "$2" -gt 0 ]; then
 ATACMDT="$2"; shift; shift; fi
 fi
 
-if [ -n "$1" ] && [ "$1" = "-stop" ] && [ -n "$SATAP" ]; then
-get_ata_target "$SATAP"
-while test -f "$SYSFSTGT"/delete; do echo 1 > "$SYSFSTGT"/delete; sleep 1; done
-exit; fi
+if [ -n "$RLETTY" ] && [ "$PWRCTL" = rle ]; then
+stty -F "$RLETTY" 9600 -echo && echo "RLETTY=""$RLETTY"; fi
 
-if [ -n "$1" ] && [ "$1" = "-scan" ] && [ -n "$SATAP" ]; then
-echo '0 0 0' > "$SCSIHOST"/scan; exit; fi
+if [ "$DDLOOP" = 0 ]; then
+if [ -n "$USBID" ] && [ "$PWRCTL" = hub ]; then power_cycle; exit
+elif [ -n "$RLETTY" ] && [ "$PWRCTL" = rle ]; then power_cycle; exit; fi
+fi
 
-if [ -z "$SATAP" ]; then showhelp
+if [ -z "$SATAP" ] && [ -z "$USBID" ]; then showhelp
 exit; fi
 
 OUTFILE="$1"; shift
@@ -122,23 +194,38 @@ DONE=X
 LOOPCOUNT=0
 
 until [ "$DONE" = 0 ]; do
-get_ata_target "$SATAP"; get_ata_dev "$SATAP"
+
+if [ -n "$SATAP" ]; then get_ata_target "$SATAP"; get_ata_dev "$SATAP"
+elif [ "$LOOPCOUNT" -gt 0 ] && [ -n "$USBID" ]; then get_usb_dev_by_id "$USBID"
+fi
+
 if [ -n "$ATACMDT" ]; then echo "$ATACMDT" > "$SYSFSTGT"/timeout
 fi
+
 echo ddrescue "-fd" "$INDEV" "$OUTFILE" "$MAPFILE" "$DDOPTS"
 ddrescue "-fd" "$INDEV" "$OUTFILE" "$MAPFILE" $DDOPTS
 DONE="$?"
+
 if [ "$DONE" != 0 ] && [ "$DDLOOP" -gt 0 ]; then
-sleep "$LOOPWAIT"
-while test -d "$SYSFSTGT"; do echo 1 > "$SYSFSTGT"/delete
-sleep "$LOOPWAIT"; done
-sleep "$LOOPWAIT" && echo '0 0 0' > "$SCSIHOST"/scan
-DDLOOP=$(($DDLOOP-1))
-LOOPCOUNT=$(($LOOPCOUNT+1))
-echo "\n\033[1mDDLOOP" "#""$LOOPCOUNT"
-tput sgr0
-date
-echo -n "\n"
+
+  device_delete &
+  sleep "$LOOPWAIT"
+
+  if [ -n "$PWRCTL" ]; then power_cycle
+  elif [ -n "$SATAP" ]; then while test -d "$SYSFSTGT"; do
+  sleep "$LOOPWAIT"; done; fi
+
+  if [ -n "$SATAP" ]; then sleep "$LOOPWAIT"
+  echo '0 0 0' > "$SCSIHOST"/scan; fi
+
+  DDLOOP=$(($DDLOOP-1))
+  LOOPCOUNT=$(($LOOPCOUNT+1))
+
+  echo "\n\033[1mDDLOOP #""$LOOPCOUNT"; tput sgr0
+  date; echo -n "\n"
+
+  sleep "$LOOPWAIT"
+
 else DONE=0
 fi
 done
