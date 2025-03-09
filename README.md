@@ -64,3 +64,9 @@ Use `man ddrescue` to read full list of options. Some important options:
 * `-J` Optional		reread latest good sector after every error.  
 * `-r <n>` OR `-r -1`	<n> retry passes before trim (-1=infinity) [0]  
 * `-m <domain.mapfile>`	restrict domain to finished blocks in `<file>` `ddru_ntfsbitmap`
+
+## Preview:
+`ddrescue-loop`  
+[![ddrescue-loop](https://asciinema.org/a/628786.svg)](https://asciinema.org/a/628786)  
+`dmesg -Wt`  
+[![dmesg -Wt](https://asciinema.org/a/628787.svg)](https://asciinema.org/a/628787)
