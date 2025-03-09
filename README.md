@@ -13,7 +13,7 @@ And optional `uhubctl` for power off/on cycle. Or hardware USB Relay Module LCUS
 Please note the order of arguments. Keys must be passed in the same order as they are written.  
 Mixing not supported. Space between key and value is required.
 
-## For SATA drive:
+## For SATA source drive:
 
 Stop/start drive at SATA port:  
 * `ddrescue-loop -ata <n> -stop`		stop drive at SATA port `<n>`  
@@ -34,17 +34,17 @@ Timeout for drive get ready after stop/restart:
 Change ATA command timeout:  
 `-act <n>`		Time in seconds `<n>` [30]
 
-## For USB drive:
+## For USB source drive:
 
-Power off/power on USB device VID:PID, by hub or rle method:  
-* `ddrescue-loop -usb <VID:PID> -pwc hub`	Use `uhubctl --search <ID>`  
-* `ddrescue-loop -usb <VID:PID> -pwc rle`	Use USB Relay LCUS-1 CH340 `RLETTY=`
+Power off/power on USB device VID:PID ID, by hub or rle method:  
+* `ddrescue-loop -usb <ID> -pwc hub`	Use `uhubctl --search <ID>`  
+* `ddrescue-loop -usb <ID> -pwc rle`	Use USB Relay LCUS-1 CH340 `RLETTY=`
 
 Launch recovery from USB drive:  
-`ddrescue-loop -usb <VID:PID> [-loop <n>] [-pwc <hub/rle>] [-wait <n>] outfile mapfile [ddrescue options]`
+`ddrescue-loop -usb <ID> [-loop <n>] [-pwc <hub/rle>] [-wait <n>] outfile mapfile [ddrescue options]`
 
 Specify the VID:PID ID of the source USB drive in Hex form:  
-`-usb <VID:PID>`	Separated by colon (look at lsusb output)
+`-usb <ID>`	VID:PID separated by colon (look at `lsusb` output)
 
 Restart `ddrescue` process (power off/on device) in case of failure:  
 `-loop <n>`		Limit number of attempts `<n>`
