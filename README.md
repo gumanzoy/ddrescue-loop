@@ -1,4 +1,4 @@
-## `ddrescue-loop` script restarts ddrescue in case of failure.
+## `ddrescue-loop` script restarts `ddrescue` in case of failure.
 
 Compatible only with Linux, not with other *nix!  
 Depends on udev `/dev` and sysfs `/sys` kernel interfaces.
