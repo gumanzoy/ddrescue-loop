@@ -1,7 +1,7 @@
 ## `ddrescue-loop` script restarts ddrescue in case of failure.
 
 Compatible only with Linux, not with other *nix!  
-Depends on udev `/dev` and sysfs `/sys` kernel interfaces
+Depends on udev `/dev` and sysfs `/sys` kernel interfaces.
 
 For SATA requires AHCI compatible motherboard. For all Intel and modern AMD platforms (AM4 and newer), check the UEFI Setup SATA settings to ensure Port Hot Plug is enabled.
 
@@ -64,6 +64,16 @@ Use `man ddrescue` to read full list of options. Some important options:
 * `-J` Optional		reread latest good sector after every error.  
 * `-r <n>` OR `-r -1`	<n> retry passes before trim (-1=infinity) [0]  
 * `-m <domain.mapfile>`	restrict domain to finished blocks in `<file>` `ddru_ntfsbitmap`
+
+## Links [RU]:
+Копирование информации с повреждённых носителей с помощью ddrescue  
+[forum.ixbt.com](https://forum.ixbt.com/topic.cgi?id=11:47589-31)
+
+Костыли для ddrescue. Что делать если SSD перестает отдавать данные  
+[habr.com/ru/articles/777230/](https://habr.com/ru/articles/777230/)
+
+Восстановление данных с M.2 NVMe SSD. Скрипт ddrescue-loop v0.2  
+[habr.com/ru/articles/785040/](https://habr.com/ru/articles/785040/)
 
 ## Preview:
 `ddrescue-loop`  
