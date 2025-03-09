@@ -1,3 +1,14 @@
+# Compatible only with Linux, not with other *nix!
+# Depends on udev /dev and sysfs /sys kernel interfaces
+
+# For SATA requires AHCI compatible motherboard
+# For all Intel and modern AMD platforms (AM4 and newer), check the UEFI Setup
+# SATA settings to ensure Port Hot Plug is enabled
+
+# For USB requires lsusb from usbutils package
+# And optional uhubctl for power off/on cycle
+# Or hardware USB Relay Module LCUS-1 CH340
+
 ddrescue-loop restarts ddrescue in case of failure
 Please note the order of arguments
 Keys must be passed in the same order as they are written
