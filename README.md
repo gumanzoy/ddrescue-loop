@@ -23,7 +23,7 @@ Launch recovery from SATA drive:
 `ddrescue-loop -ata <n> [-loop <n>] [-pwc] [-wait <n>] [-act <n>] outfile mapfile [ddrescue options]`
 
 Specify the SATA port number to which the source drive is connected:  
-`-ata <n>`		SATA port number `<n>` dight (look at dmesg output)
+`-ata <n>`		SATA port number `<n>` dight (look at `dmesg` output)
 
 Stop/restart function for SATA drive in case of failure:  
 `-loop <n>`		Limit number of attempts `<n>`
