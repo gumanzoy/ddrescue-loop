@@ -1,5 +1,5 @@
 #!/bin/sh
-#ddrescue-loop script writen by gumanzoy <gumanzoy@gmail.com>
+#ddrescue-loop script written by gumanzoy <gumanzoy@gmail.com>
 
 # Compatible only with Linux, not with other *nix!
 # Depends on udev /dev and sysfs /sys kernel interfaces
