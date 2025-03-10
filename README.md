@@ -8,6 +8,11 @@ For SATA requires AHCI compatible motherboard. For all Intel and modern AMD plat
 For USB requires `lsusb` from `usbutils` package.  
 And optional `uhubctl` for power off/on cycle. Or hardware USB Relay Module LCUS-1 CH340
 
+```
+wget https://github.com/gumanzoy/ddrescue-loop/raw/main/ddrescue-loop
+chmod +x ddrescue-loop
+```
+
 ### Usage:
 
 Please note the order of arguments. Keys must be passed in the same order as they are written.  
