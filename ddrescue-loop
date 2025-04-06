@@ -289,7 +289,7 @@ if [ "$DONE" != 0 ] && [ "$DDLOOP" -gt 0 ]; then
   DDLOOP=$(($DDLOOP-1))
   LOOPCOUNT=$(($LOOPCOUNT+1))
 
-  /bin/echo -e "\n\033[1mDDLOOP #""$LOOPCOUNT"; tput sgr0
+  /bin/echo -e "\n\e[1m""DDLOOP #""$LOOPCOUNT""\e[0m"
   date; echo ""
 
   sleep "$LOOPWAIT"
